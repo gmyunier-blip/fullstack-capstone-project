@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState,useEffect } from 'react';
 import { urlConfig } from "../../config";
 import { useAppContext } from "../../context/AuthContext";
 import { useNavigate } from "react-router-dom";
@@ -9,9 +9,16 @@ function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const { setIsLoggedIn } = useAppContext();
+  const bearerToken = sessionStorage.getItem("bearer-token");
+  const [incorrect, setIncorrect] = useState("");
   const [showerr, setShowerr] = useState("");
   const navigate = useNavigate();
 
+  useEffect(() => {
+    if (sessionStorage.getItem("auth-token")) {
+      navigate("/app");
+    }
+  }, [navigate]);
   // insert code here to create handleLogin function and include console.log
   const handleLogin = async () => {
     const response = await fetch(`${urlConfig.backendUrl}/api/auth/login`, {
@@ -20,6 +27,7 @@ function LoginPage() {
       //Step 1 - Task 7
       headers: {
         "content-type": "application/json",
+        Authorization: bearerToken ? `Bearer ${bearerToken}` : "", // Include Bearer token if available
       },
       //Step 1 - Task 8
       body: JSON.stringify({
@@ -31,7 +39,6 @@ function LoginPage() {
     //Step 2 - Task 1
     const json = await response.json();
     console.log("json data", json);
-    console.log("er", json.error);
 
     //Step 2 - Task 2
     if (json.authtoken) {
@@ -42,6 +49,14 @@ function LoginPage() {
       setIsLoggedIn(true);
       //Step 2 - Task 4
       navigate("/app");
+    } else {
+      //Step 2: Task 5
+      document.getElementById("email").value = "";
+      document.getElementById("password").value = "";
+      setIncorrect("Wrong user or password. Try again.");
+      setTimeout(() => {
+        setIncorrect("");
+      }, 2000);
     }
     if (json.error) {
       //Step 2 - Task 5
@@ -81,6 +96,17 @@ function LoginPage() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
               />
+              <span
+                style={{
+                  color: "red",
+                  height: ".5cm",
+                  display: "block",
+                  fontStyle: "italic",
+                  fontSize: "12px",
+                }}
+              >
+                {incorrect}
+              </span>
             </div>
             <div className="text-danger">{showerr}</div>
 
